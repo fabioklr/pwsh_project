@@ -71,9 +71,15 @@ Add-AzVpnClientRootCertificate -VpnClientRootCertificateName $P2SRootCertName -V
 $profile = New-AzVpnClientConfiguration -ResourceGroupName 'myRG' -Name 'myVNetGW' -AuthenticationMethod "EapTls"
 $profile.VPNProfileSASUrl
 
+# Create a VM.
+Get-AzureRmMarketplaceTerms -Publisher ntegralinc1586961136942 -Product ntg_ubuntu_22_04_daas -Name ntg_ubuntu_22_04_daas `
+ | Set-AzureRmMarketplaceTerms -Accept
+(Get-AzSshKey -ResourceGroupName myRG -Name myVM_key).PublicKey
+New-AzResourceGroupDeployment -ResourceGroupName myRG -TemplateFile .\main.bicep
 
+(Get-AzNetworkInterface).IpConfigurations | Select-Object -ExpandProperty PrivateIpAddress
 
-
+Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -Name 'myVM' -CommandId 'RunShellScript' -ScriptPath '.\ref_script.ps1'
 
 
 
