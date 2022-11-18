@@ -70,16 +70,22 @@ Add-AzVpnClientRootCertificate -VpnClientRootCertificateName $P2SRootCertName -V
 # and configure your VPN client by opening the file that matches your operating system.
 $profile = New-AzVpnClientConfiguration -ResourceGroupName 'myRG' -Name 'myVNetGW' -AuthenticationMethod "EapTls"
 $profile.VPNProfileSASUrl
+# You can now connect to the VPN in Settings > Network & Internet > VPN.
 
-# Create a VM.
-Get-AzureRmMarketplaceTerms -Publisher ntegralinc1586961136942 -Product ntg_ubuntu_22_04_daas -Name ntg_ubuntu_22_04_daas `
- | Set-AzureRmMarketplaceTerms -Accept
-(Get-AzSshKey -ResourceGroupName myRG -Name myVM_key).PublicKey
+# Next, create a VM. If you want to use a an image from the marketplace, you first need to accept the product terms.
+Get-AzMarketplaceTerms -Publisher 'ntegralinc1586961136942' -Product 'ntg_ubuntu_22_04_daas' -Name 'ntg_ubuntu_22_04_daas' -OfferType 'virtualmachine' `
+ | Set-AzMarketplaceTerms -Accept
+# Then you can deploy the VM with the following command. The VM specifications are declaratively defined by a Bicep file.
 New-AzResourceGroupDeployment -ResourceGroupName myRG -TemplateFile .\main.bicep
+# Unfortunately, I was not able to automatically execute Bash code after the VM was deployed. To clarify this issue, I have asked a question on StackOverflow:
+# https://stackoverflow.com/questions/74478948/post-deployment-bash-script-in-bicep-file-does-not-execute
 
+# Get the VM's private IP address, start Windows Remote Desktop Connection, enter the IP address and the credentials, and log in.
 (Get-AzNetworkInterface).IpConfigurations | Select-Object -ExpandProperty PrivateIpAddress
+mstsc
 
-Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -Name 'myVM' -CommandId 'RunShellScript' -ScriptPath '.\ref_script.ps1'
+# Install Powershell on the VM.
+Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -Name 'myVM' -CommandId 'RunShellScript' -ScriptPath '.\bash_snippet.sh'
 
 
 
