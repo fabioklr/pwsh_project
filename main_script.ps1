@@ -89,31 +89,6 @@ Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -Name 'myVM' -CommandId 'RunShel
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-# Create new VM in the 'myRG' resource group.
-$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
-
-$vmParams = @{
-    ResourceGroupName = 'myRG-I9B42Z9NGD'
-    Name = 'TestVM1'
-    Location = 'eastus'
-    ImageName = 'Win2016Datacenter'
-    PublicIpAddressName = 'TestPublicIp'
-    Credential = $cred
-    OpenPorts = 3389
-  }
-
-
 # Set system-wide dark mode.
 $registryPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 Set-ItemProperty -Path $registryPath -Name AppsUseLightTheme -Value 0 -Type Dword -Force
