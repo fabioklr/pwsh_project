@@ -44,7 +44,7 @@ $Gateway = Get-AzVirtualNetworkGateway -ResourceGroupName myRG -Name myVNetGW
 Set-AzVirtualNetworkGateway -VirtualNetworkGateway $Gateway -VpnClientAddressPool "172.16.201.0/24"
 
 # Generate a root certificate. This can only be done by an admin in a PowerShell session.
-# The session should stay active for the next part, where the client certificate is generated.
+# The session should stay active for the next part, when the client certificate is generated.
 $cert = New-SelfSignedCertificate -Type Custom -KeySpec Signature `
 -Subject "CN=P2SRootCert" -KeyExportPolicy Exportable `
 -HashAlgorithm sha256 -KeyLength 2048 `
@@ -66,36 +66,25 @@ $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate
 $CertBase64 = [system.convert]::ToBase64String($cert.RawData)
 Add-AzVpnClientRootCertificate -VpnClientRootCertificateName $P2SRootCertName -VirtualNetworkGatewayname "myVNetGW" -ResourceGroupName "myRG" -PublicCertData $CertBase64
 
-# Finally, create a client configuration package, follow the link in $profile.VPNProfileSASUrl to download the ZIP file,
+# Finally, create a client configuration package, follow the link in $vpnProfile.VPNProfileSASUrl to download the ZIP file,
 # and configure your VPN client by opening the file that matches your operating system.
-$profile = New-AzVpnClientConfiguration -ResourceGroupName 'myRG' -Name 'myVNetGW' -AuthenticationMethod "EapTls"
-$profile.VPNProfileSASUrl
+$vpnProfile = New-AzVpnClientConfiguration -ResourceGroupName 'myRG' -Name 'myVNetGW' -AuthenticationMethod "EapTls"
+$vpnProfile.VPNProfileSASUrl
 # You can now connect to the VPN in Settings > Network & Internet > VPN.
 
 # Next, create a VM. If you want to use a an image from the marketplace, you first need to accept the product terms.
 Get-AzMarketplaceTerms -Publisher 'ntegralinc1586961136942' -Product 'ntg_ubuntu_22_04_daas' -Name 'ntg_ubuntu_22_04_daas' -OfferType 'virtualmachine' `
  | Set-AzMarketplaceTerms -Accept
+
 # Then you can deploy the VM with the following command. The VM specifications are declaratively defined by a Bicep file.
 New-AzResourceGroupDeployment -ResourceGroupName myRG -TemplateFile .\main.bicep
+
 # Unfortunately, I was not able to automatically execute Bash code after the VM was deployed. To clarify this issue, I have asked a question on StackOverflow:
 # https://stackoverflow.com/questions/74478948/post-deployment-bash-script-in-bicep-file-does-not-execute
 
 # Get the VM's private IP address, start Windows Remote Desktop Connection, enter the IP address and the credentials, and log in.
-(Get-AzNetworkInterface).IpConfigurations | Select-Object -ExpandProperty PrivateIpAddress
-mstsc
+$privateIP = (Get-AzNetworkInterface).IpConfigurations | Select-Object -ExpandProperty PrivateIpAddress
+mstsc /v:$privateIP
 
-# Install Powershell on the VM.
-Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -Name 'myVM' -CommandId 'RunShellScript' -ScriptPath '.\bash_snippet.sh'
-
-
-
-# Set system-wide dark mode.
-$registryPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-Set-ItemProperty -Path $registryPath -Name AppsUseLightTheme -Value 0 -Type Dword -Force
-
-$ie = New-Object -ComObject 'Edge.Application'
-
-Install-Module Selenium -Scope CurrentUser
-Get-Module Selenium
-$Driver = Start-SeFirefox
-Enter-SeUrl https://www.vbs.admin.ch -Driver $Driver
+# Configure the VM.
+Invoke-AzVMRunCommand -ResourceGroupName 'myRG' -VMName 'myVM' -CommandId 'RunPowerShellScript' -ScriptPath '.\vm_script.ps1'

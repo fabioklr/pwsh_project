@@ -60,9 +60,9 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         deleteOption: osDiskDeleteOption
       }
       imageReference: {
-        publisher: 'ntegralinc1586961136942'
-        offer: 'ntg_ubuntu_22_04_daas'
-        sku: 'ntg_ubuntu_22_04_daas'
+        publisher: 'microsoftwindowsdesktop'
+        offer: 'windows-11'
+        sku: 'win11-21h2-pro'
         version: 'latest'
       }
     }
@@ -81,11 +81,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
-  }
-  plan: {
-    name: 'ntg_ubuntu_22_04_daas'
-    publisher: 'ntegralinc1586961136942'
-    product: 'ntg_ubuntu_22_04_daas'
+    licenseType: 'Windows_Client'
   }
 }
 
